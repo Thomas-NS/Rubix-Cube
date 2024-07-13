@@ -1,0 +1,21 @@
+{
+  "name": "rubixcube",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tweenjs/tween.js": "^23.1.2",
+    "vite": "^5.3.3"
+  },
+  "dependencies": {
+    "maath": "^0.10.8",
+    "particles.js": "^2.0.0",
+    "three": "^0.166.1",
+    "three-rounded-box": "^0.1.1"
+  }
+}
