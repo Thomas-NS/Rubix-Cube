@@ -20,6 +20,7 @@ let downFace = [];
 let backFace = [];
 
 let qbArr = [];
+let startPositions = [];
 const dim = 3;
 let solving = false;
 let userMoves = [];
@@ -77,6 +78,7 @@ function createCube(){
           matrix.makeTranslation(x - 1, y - 1, z - 1);
           qb.applyMatrix4(matrix);
           qbArr.push(qb);
+          startPositions.push(matrix);
           scene.add(qb);
         }
       }
@@ -129,24 +131,11 @@ function resetCube(){
   moveCount = 0;
   counter.innerHTML = moveCount;
 
-  const qbSize = 0.9;
-  const geometry = new THREE.BoxGeometry(qbSize, qbSize, qbSize);
-  const material = new THREE.MeshBasicMaterial();
-
-  while(scene.children.length){
-    scene.remove(scene.children[0]);
-  }
-  for (let x = 0; x < dim; x++){
-    for (let y = 0; y < dim; y++){
-      for (let z = 0; z < dim; z++){
-        const qb = new THREE.Mesh(geometry, faces);
-        const matrix = new THREE.Matrix4();
-        matrix.makeTranslation(x - 1, y - 1, z - 1);
-        qb.applyMatrix4(matrix);
-        qbArr.push(qb);
-        scene.add(qb);
-      }
-    }
+  for(let i = 0; i < qbArr.length; i++){
+    let qb = qbArr[i];
+    let startMatrix = startPositions[i];
+    qb.matrix.copy(startMatrix);
+    setFaces();
   }
 }
 
@@ -217,10 +206,12 @@ function scrambleCube(){
   const moves = ['f', 'F', 'r', 'R', 'l', 'L', 'u', 'U', 'd', 'D', 'b', 'B'];
   const scrambleMoves = [];
 
-  for(let i = 0; i < 20; i++){
-    const index = Math.floor(Math.random() * 12)
-    const move = moves[index];
-    handlePress(move);
+  if(!solving){
+    for(let i = 0; i < 20; i++){
+      const index = Math.floor(Math.random() * 12)
+      const move = moves[index];
+      handlePress(move);
+    }
   }
 }
 
@@ -243,7 +234,13 @@ function cheatSolve(){
     const solve = setInterval(function(){
       handlePress(oppMoves[i]);
       i++;
-      if(i === oppMoves.length){
+      // for(let i = 0; i < qbArr; i++){
+      //   if(!qbArr[i].matrix.equals(startPositions[i])){
+      //     
+      //   }
+      // }
+
+      if(i === oppMoves.length /*|| finished === true*/){
         userMoves.length = 0;
         oppMoves.length = 0;
         i = 0;
