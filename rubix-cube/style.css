@@ -1,0 +1,107 @@
+body {
+  margin: 0;
+  overflow: hidden;
+  background-color: #0c1629;
+  font-family: "Tiny5", sans-serif;
+}
+
+canvas {
+  display: block;
+  z-index: 1;
+  position: absolute;
+  outline: none; 
+  border: none;
+}
+
+#canvasCont {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center; 
+  height: 100vh; 
+}
+
+#lightMode {
+  right: 20px;
+  top: 20px;
+  width: 60px;
+  height: 60px;
+  cursor: pointer;
+  position: absolute;
+  z-index: 2;
+}
+
+#darkMode {
+  right: 33px;
+  top: 33px;
+  width: 37px;
+  height: 37px;
+  cursor: pointer;
+  position: absolute;
+  z-index: 2;
+  display: none;
+}
+
+#helpBtn {
+  right: 115px;
+  top: 50px;
+  color: white;
+  cursor: pointer;  
+  position: absolute;
+  z-index: 2;
+}
+
+#heading { 
+  font-weight: 600;
+  font-style: normal;
+  fill: white;
+  font-size: 50px;
+  text-shadow: 10px 10px 10px #000000;
+  position: absolute;
+}
+
+svg {
+  z-index: 1;
+  transform: scale(2.5); 
+}
+
+#svgCont {
+  position: absolute;
+  top: 250px;
+  left: 900px;
+  display: flex;
+}
+
+#moveCounter {
+  top: -75px;
+  left: 20px;
+  font-size: 80px;
+  color: white;
+  position: absolute;
+  text-shadow: 7px 7px 7px #000000;
+  z-index: 2;
+}
+
+#controlButtons {
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  display: flex;
+  gap: 40px;
+}
+
+#controlButtons img {
+  cursor: pointer;
+  z-index: 2;
+}
+
+#scrambleBtn {
+  width: 45px;
+  height: 45px;
+}
+
+#resetBtn {
+  padding-top: 8px;
+  width: 30px;
+  height: 30px;
+}
