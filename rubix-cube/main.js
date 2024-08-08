@@ -20,7 +20,7 @@ let downFace = [];
 let backFace = [];
 
 let qbArr = [];
-let startPositions = [];
+let startMatrices = [];
 const dim = 3;
 let solving = false;
 let userMoves = [];
@@ -78,7 +78,7 @@ function createCube(){
           matrix.makeTranslation(x - 1, y - 1, z - 1);
           qb.applyMatrix4(matrix);
           qbArr.push(qb);
-          startPositions.push(matrix);
+          startMatrices.push(matrix.clone());
           scene.add(qb);
         }
       }
@@ -133,7 +133,7 @@ function resetCube(){
 
   for(let i = 0; i < qbArr.length; i++){
     let qb = qbArr[i];
-    let startMatrix = startPositions[i];
+    let startMatrix = startMatrices[i];
     qb.matrix.copy(startMatrix);
     setFaces();
   }
@@ -222,6 +222,9 @@ function handlePress(key){
       break;
   }
   setFaces();
+  if(isCubeSolved()){
+    console.log("solved!");
+  }
 }
 
 function scrambleCube(){
@@ -231,14 +234,15 @@ function scrambleCube(){
   if(!solving){
     for(let i = 0; i < 20; i++){
       const index = Math.floor(Math.random() * 12)
-      const move = moves[index];
+      const move = moves[index];1
       handlePress(move);
     }
   }
 }
 
 function cheatSolve(){
-  if(!solving){
+  console.log(isCubeSolved());
+  if(!solving && !isCubeSolved()){
     solving = true;
     let oppMoves = [];
     let i = 0;
@@ -256,13 +260,9 @@ function cheatSolve(){
     const solve = setInterval(function(){
       handlePress(oppMoves[i]);
       i++;
-      // for(let i = 0; i < qbArr; i++){
-      //   if(!qbArr[i].matrix.equals(startPositions[i])){
-      //     
-      //   }
-      // }
 
-      if(i === oppMoves.length /*|| finished === true*/){
+      if(i === oppMoves.length || isCubeSolved()){
+        console.log(isCubeSolved());
         userMoves.length = 0;
         oppMoves.length = 0;
         i = 0;
@@ -308,26 +308,36 @@ function changeMode(){
   }
 }
 
-/*
-TO DO:
+function isCubeSolved(){
+  for(let i = 0; i < qbArr.length; i++){
+    const currentMatrix = qbArr[i].matrix;
+    const startMatrix = startMatrices[i];
 
-light switch:
-X switch icons (moon/sun)
-- animation
-- credit
+    const currentPosition = new THREE.Vector3();
+    const currentQuaternion = new THREE.Quaternion();
+    const currentScale = new THREE.Vector3();
+    currentMatrix.decompose(currentPosition, currentQuaternion, currentScale);
 
-instructions toggle:
-- question mark button
-- display instructions
-- contain buttons 
+    const startPosition = new THREE.Vector3();
+    const startQuaternion = new THREE.Quaternion();
+    const startScale = new THREE.Vector3();
+    startMatrix.decompose(startPosition, startQuaternion, startScale);
+    
+    if(!vectorsSimilar(currentPosition, startPosition)){
+      return false;
+    }
+  }
+  return true;
+}
 
-heading:
-- make heading move with window resize
+function isSimilar(val1, val2){
+  const epsilon = 1e-6;
+  return Math.abs(val1 - val2) < epsilon;
+}
 
-animation: 
-- non matrix method for rotation
+function vectorsSimilar(v1, v2){
+  return isSimilar(v1.x, v2.x) && isSimilar(v1.y, v2.y) && isSimilar(v1.z, v2.z);
+}
 
-- fix solve bug
-- make counter count solving moves - start button?
-*/ 
- 
+
+
