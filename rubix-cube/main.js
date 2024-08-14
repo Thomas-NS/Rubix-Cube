@@ -19,21 +19,13 @@ let upFace = [];
 let downFace = [];
 let backFace = [];
 
+const moves = ['f', 'F', 'r', 'R', 'l', 'L', 'u', 'U', 'd', 'D', 'b', 'B'];
 let qbArr = [];
 let startMatrices = [];
 const dim = 3;
 let solving = false;
 let userMoves = [];
 let moveCount = -1;
-
-const faces = [
-  new THREE.MeshBasicMaterial({ color: 0x75bf69}),   //green (R)
-  new THREE.MeshBasicMaterial({ color: 0x4287f5}),   //blue (L)
-  new THREE.MeshBasicMaterial({ color: 0xcfaa4e}),   //yellow (U)
-  new THREE.MeshBasicMaterial({ color: 0xc8c9c5}),   //white (D)
-  new THREE.MeshBasicMaterial({ color: 0xad3743}),   //red (F)
-  new THREE.MeshBasicMaterial({ color: 0xbd7931})    //orange (B)
-];
 
 function init(){
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -65,25 +57,59 @@ function listenerSetup(){
 function createCube(){
   const qbSize = 0.9;
   const geometry = new THREE.BoxGeometry(qbSize, qbSize, qbSize);
-  const material = new THREE.MeshBasicMaterial();
-  const cubie = new THREE.InstancedMesh(geometry, material, Math.pow(dim, 3));
-  cubie.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
-  camera.position.set(5, 4, 5);
 
-   for (let x = 0; x < dim; x++){
-      for (let y = 0; y < dim; y++){
-        for (let z = 0; z < dim; z++){
-          const qb = new THREE.Mesh(geometry, faces);
-          const matrix = new THREE.Matrix4();
-          matrix.makeTranslation(x - 1, y - 1, z - 1);
-          qb.applyMatrix4(matrix);
-          qbArr.push(qb);
-          startMatrices.push(matrix.clone());
-          scene.add(qb);
-        }
+  for (let x = 0; x < dim; x++){
+    for (let y = 0; y < dim; y++){
+      for (let z = 0; z < dim; z++){
+        const material = [
+          new THREE.MeshBasicMaterial({ color: 0x75bf69}),   //green (R)
+          new THREE.MeshBasicMaterial({ color: 0x4287f5}),   //blue (L)
+          new THREE.MeshBasicMaterial({ color: 0xcfaa4e}),   //yellow (U)
+          new THREE.MeshBasicMaterial({ color: 0xc8c9c5}),   //white (D)
+          new THREE.MeshBasicMaterial({ color: 0xad3743}),   //red (F)
+          new THREE.MeshBasicMaterial({ color: 0xbd7931})    //orange (B)
+        ];
+
+        const qb = new THREE.Mesh(geometry, material);
+        const matrix = new THREE.Matrix4();
+        matrix.makeTranslation(x - 1, y - 1, z - 1);
+        qb.applyMatrix4(matrix);
+        qbArr.push(qb);
+        startMatrices.push(matrix.clone());
+        scene.add(qb);
+        qb.userData = {
+          colours: [],
+          type: ''
+        };
+        setCubieType(qb, x, y, z);
+        setCubieColours(qb, x, y, z);
       }
     }
   }
+}
+
+function setCubieType(qb, x, y, z){
+  if(x === 1 && (y === 1 || (z === 1 && (y === 0 || y === 2))) || (x === 0 || x === 2 ) && y === 1 && z === 1){
+    qb.userData.type = "centre";
+  }
+
+  else if(x === 0 && z !== 1 && (y === 2 || y === 0) || x === 2 && z !== 1 && (y === 2 || y === 0)){
+    qb.userData.type = "corner";
+  }
+
+  else {
+    qb.userData.type = "edge";
+  }
+}
+
+function setCubieColours(qb, x, y, z){
+  if(x === 0) qb.userData.colours.push("blue");
+  if(x === 2) qb.userData.colours.push("green");
+  if(y === 0) qb.userData.colours.push("white");
+  if(y === 2) qb.userData.colours.push("yellow");
+  if(z === 0) qb.userData.colours.push("orange");
+  if(z === 2) qb.userData.colours.push("red");
+}
 
 function setFaces(){
   frontFace.length = 0;
@@ -94,16 +120,17 @@ function setFaces(){
   backFace.length = 0;
   
   for(let i = 0; i < qbArr.length; i++){
+    const epsilon = 1e-6;
     const qb = qbArr[i];
     const position = new THREE.Vector3();
     position.setFromMatrixPosition(qb.matrix);
 
-    if(Math.abs(position.z - 1) < 0.2) frontFace.push(qb);
-    if(Math.abs(position.x - 1) < 0.2) rightFace.push(qb);
-    if(Math.abs(position.x + 1) < 0.2) leftFace.push(qb);
-    if(Math.abs(position.y - 1) < 0.2) upFace.push(qb);
-    if(Math.abs(position.y + 1) < 0.2) downFace.push(qb);
-    if(Math.abs(position.z + 1) < 0.2) backFace.push(qb);
+    if(Math.abs(position.z - 1) < epsilon) frontFace.push(qb);
+    if(Math.abs(position.x - 1) < epsilon) rightFace.push(qb);
+    if(Math.abs(position.x + 1) < epsilon) leftFace.push(qb);
+    if(Math.abs(position.y - 1) < epsilon) upFace.push(qb);
+    if(Math.abs(position.y + 1) < epsilon) downFace.push(qb);
+    if(Math.abs(position.z + 1) < epsilon) backFace.push(qb);
   }
 }
 
@@ -143,98 +170,96 @@ function handlePress(key){
   const speed = Math.PI/2;
   const axis = new THREE.Vector3();
 
-  //lowercase = clockwise, uppercase = anticlockwise
-  switch(key){
-    case 'f':
-      axis.set(0, 0, -1);
-      rotate(frontFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'F':
-      axis.set(0, 0, 1);
-      rotate(frontFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'r':
-      axis.set(-1, 0, 0);
-      rotate(rightFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'R':
-      axis.set(1, 0, 0);
-      rotate(rightFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'l': 
-      axis.set(-1, 0, 0);
-      rotate(leftFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'L': 
-      axis.set(1, 0, 0);
-      rotate(leftFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'u': 
-      axis.set(0, -1, 0);
-      rotate(upFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'U': 
-      axis.set(0, 1, 0);
-      rotate(upFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'd': 
-      axis.set(0, -1, 0);
-      rotate(downFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'D': 
-      axis.set(0, 1, 0);
-      rotate(downFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'b':
-      axis.set(0, 0, -1);
-      rotate(backFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'B':
-      axis.set(0, 0, 1);
-      rotate(backFace, axis, speed);
-      updateCounter();
-      userMoves.push(key);
-      break;
-    case 'z':
-      cheatSolve();
-      break;
-  }
-  setFaces();
-  if(isCubeSolved()){
-    console.log("solved!");
+  if(moves.includes(key) || key === 'z'){
+    //lowercase = clockwise, uppercase = anticlockwise
+    switch(key){
+      case 'f':
+        axis.set(0, 0, -1);
+        rotate(frontFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'F':
+        axis.set(0, 0, 1);
+        rotate(frontFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'r':
+        axis.set(-1, 0, 0);
+        rotate(rightFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'R':
+        axis.set(1, 0, 0);
+        rotate(rightFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'l': 
+        axis.set(-1, 0, 0);
+        rotate(leftFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'L': 
+        axis.set(1, 0, 0);
+        rotate(leftFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'u': 
+        axis.set(0, -1, 0);
+        rotate(upFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'U': 
+        axis.set(0, 1, 0);
+        rotate(upFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'd': 
+        axis.set(0, -1, 0);
+        rotate(downFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'D': 
+        axis.set(0, 1, 0);
+        rotate(downFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'b':
+        axis.set(0, 0, -1);
+        rotate(backFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'B':
+        axis.set(0, 0, 1);
+        rotate(backFace, axis, speed);
+        updateCounter();
+        userMoves.push(key);
+        break;
+      case 'z':
+        cheatSolve();
+        break;
+    }
+    setFaces();
   }
 }
 
 function scrambleCube(){
-  const moves = ['f', 'F', 'r', 'R', 'l', 'L', 'u', 'U', 'd', 'D', 'b', 'B'];
   const scrambleMoves = [];
 
   if(!solving){
     for(let i = 0; i < 20; i++){
       const index = Math.floor(Math.random() * 12)
-      const move = moves[index];1
+      const move = moves[index];
       handlePress(move);
     }
   }
@@ -308,35 +333,28 @@ function changeMode(){
   }
 }
 
-function isCubeSolved(){
+function isCubeSolved(){  
+  const epsilon = 1e-6;
+
+  function vectorsSimilar(v1, v2){
+    return Math.abs(v1.x - v2.x) < epsilon && Math.abs(v1.y - v2.y) < epsilon && Math.abs(v1.z - v2.z) < epsilon;
+  }
+
   for(let i = 0; i < qbArr.length; i++){
     const currentMatrix = qbArr[i].matrix;
     const startMatrix = startMatrices[i];
 
     const currentPosition = new THREE.Vector3();
-    const currentQuaternion = new THREE.Quaternion();
-    const currentScale = new THREE.Vector3();
-    currentMatrix.decompose(currentPosition, currentQuaternion, currentScale);
+    currentPosition.setFromMatrixPosition(currentMatrix);
 
     const startPosition = new THREE.Vector3();
-    const startQuaternion = new THREE.Quaternion();
-    const startScale = new THREE.Vector3();
-    startMatrix.decompose(startPosition, startQuaternion, startScale);
-    
+    startPosition.setFromMatrixPosition(startMatrix);
+
     if(!vectorsSimilar(currentPosition, startPosition)){
       return false;
     }
   }
   return true;
-}
-
-function isSimilar(val1, val2){
-  const epsilon = 1e-6;
-  return Math.abs(val1 - val2) < epsilon;
-}
-
-function vectorsSimilar(v1, v2){
-  return isSimilar(v1.x, v2.x) && isSimilar(v1.y, v2.y) && isSimilar(v1.z, v2.z);
 }
 
 
